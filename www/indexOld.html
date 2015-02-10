@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>#superChat</title>
+
+		<style type="text/css">
+
+			body {
+				text-align: center;
+			}
+
+			body #chat{
+				margin-top: 20px;
+				overflow-y:auto;
+				height: 500px;
+			}
+
+			#chat i{
+				color: DarkOrange;
+			}
+
+			#chat strong
+			{
+				background-color: black;
+				color: white;
+				font-weight: bold;
+			}
+
+			#chat #moi
+			{
+				background-color: green;
+				color: white;
+				font-weight: bold;
+			}
+
+
+		</style>
+
+		<script id="message" type="text/x-handlebars-template">
+			<strong>{{pseudo}}:</strong> <span>{{content}}</span><br>
+		</script>
+
+		<script id="messageMoi" type="text/x-handlebars-template">
+			<span id="moi">{{pseudo}}:</span> {{content}}<br>
+		</script>
+
+		<script id="connection" type="text/x-handlebars-template">
+			<i>{{pseudo}}{{content}}</i><br>
+		</script>
+	</head>
+
+	<body onload="setTitle()">
+		<h1>Mon superChat !</h1>
+
+			<input id="text" type="text" autofocus placeholder="votre texte ici" autocomplete ='off'>
+			<button id='send'>superChat me !</button>
+
+<hr>
+		<div id="chat"></div>
+<hr>
+
+
+		<!-- <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script> -->
+		<script src="jquery.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="handlebars.js"></script>
+		<script>
+			var pseudo = prompt('Quel est votre pseudo : ');
+
+			if(pseudo == ''){
+				pseudo = prompt('Il me faut vraiment un pseudo : ');
+			}
+
+			if(pseudo == null){
+				pseudo = 'J.Doe_' + Date.now();
+			}
+
+			var socket = io.connect();
+
+			socket.emit('petit_nouveau', pseudo);
+
+			socket.on('message', function(message){
+				var data = {pseudo: message.pseudo, content:message.content};
+
+				if(message.pseudo === pseudo){
+					var template = Handlebars.compile( $('#messageMoi').html() );
+				}
+				else {
+					var template = Handlebars.compile( $('#message').html() );
+				}
+					$('#chat').prepend( template(data) );
+
+			});
+
+			socket.on('welcome', function(message){
+				var data = {pseudo: message.pseudo, content:message.content};
+				var template = Handlebars.compile( $('#connection').html() );
+				$('#chat').prepend( template(data) );
+			});
+
+			$("#text").keyup(function(event){
+				if(event.keyCode == 13){
+					$("#send").click();
+				}
+			});
+
+			$('#send').click(function(){
+				socket.emit('message',$('#text').val());
+				$('#text').val('');
+			});
+
+			$(document).click(function(){
+				$('#text').focus();
+			});
+
+			function setTitle(){
+				$('head title').text(pseudo + ' @ superChat');
+			};
+		</script>
+	</body>
+</html>

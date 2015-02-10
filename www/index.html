@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>#superChat</title>
+
+		<style type="text/css">
+
+			body {
+				text-align: center;
+			}
+
+			body #chat{
+				margin-top: 20px;
+				overflow-y:auto;
+				height: 500px;
+			}
+
+			#chat i{
+				color: DarkOrange;
+			}
+
+			#chat strong
+			{
+				background-color: black;
+				color: white;
+				font-weight: bold;
+			}
+
+			#chat #moi
+			{
+				background-color: green;
+				color: white;
+				font-weight: bold;
+			}
+
+
+		</style>
+
+		<script id="message" type="text/x-handlebars-template">
+			<strong>{{pseudo}}:</strong> <span>{{content}}</span><br>
+		</script>
+
+		<script id="messageMoi" type="text/x-handlebars-template">
+			<span id="moi">{{pseudo}}:</span> {{content}}<br>
+		</script>
+
+		<script id="connection" type="text/x-handlebars-template">
+			<i>{{pseudo}}{{content}}</i><br>
+		</script>
+	</head>
+
+	<body>
+		<h1>Mon superChat !</h1>
+
+			<input id="text" type="text" autofocus placeholder="votre texte ici" autocomplete ='off'>
+			<button id='send'>superChat me !</button>
+
+	<hr>
+		<div id="chat"></div>
+	<hr>
+
+		<script src="jquery.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="handlebars.js"></script>
+		<script type="text/coffeescript">
+			pseudo = prompt 'Quel est votre pseudo : '
+
+			if pseudo is ''
+				pseudo = prompt 'Il me faut vraiment un pseudo : '
+
+			if pseudo is null
+				pseudo = 'J.Doe_' + Date.now()
+
+			socket = io.connect()
+
+			socket.emit 'petit_nouveau', pseudo
+
+			socket.on 'message', (message) ->
+				data =
+					pseudo: message.pseudo
+					content:message.content
+
+				if message.pseudo is pseudo
+					template = Handlebars.compile $('#messageMoi').html()
+				else
+					template = Handlebars.compile $('#message').html()
+				$('#chat').prepend( template(data))
+
+
+			socket.on 'welcome', (message) ->
+				data =
+					pseudo: message.pseudo
+					content:message.content
+
+				template = Handlebars.compile $('#connection').html()
+				$('#chat').prepend( template(data))
+
+			$("#text").keyup (event)->
+				if event.keyCode is 13
+					$("#send").click()
+
+			$('#send').click ->
+				socket.emit 'message',$('#text').val()
+				$('#text').val('')
+
+			$(document).click ->
+				$('#text').focus()
+
+			$(document).ready ->
+				$('head title').text(pseudo + ' @ superChat')
+		</script>
+		<script type="text/javascript" src="coffee-script.js"> </script>
+	</body>
+</html>
